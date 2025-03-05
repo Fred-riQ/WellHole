@@ -18,7 +18,7 @@ import MyBookings from './components/MyBookings';
 import PaymentPage from './components/PaymentPage';
 
 // API URL
-const API_URL = 'https://backend-ftwe.onrender.com/apiadd';
+const API_URL = 'https://backend-e439.onrender.com/apiadd';
 
 function App() {
   const [rooms, setRooms] = useState([]);

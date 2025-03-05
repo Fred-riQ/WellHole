@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://backend-ftwe.onrender.com';
+const API_URL = 'https://backend-e439.onrender.com/api';
 
 // Create axios instance
 const api = axios.create({
