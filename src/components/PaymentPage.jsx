@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaLock, FaMoneyBillWave, FaCreditCard, FaMobile } from 'react-icons/fa';
 import './PaymentPage.css';
 
-function PaymentPage({ room, bookingDates, onConfirmPayment, setCurrentPage }) {
+function PaymentPage({ room, bookingDates, onConfirmPayment, setCurrentPage, sendEmail, initiateMpesaPayment }) {
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState('mpesa');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -36,36 +36,34 @@ function PaymentPage({ room, bookingDates, onConfirmPayment, setCurrentPage }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (validateForm()) {
       setIsProcessing(true);
       
-      // Simulate payment processing
-      setTimeout(() => {
-        const paymentDetails = {
-          method: paymentMethod,
-          amount: calculateTotal(),
-          transactionId: 'MPESA' + Math.floor(Math.random() * 1000000),
-          phoneNumber: phoneNumber,
-          timestamp: new Date()
-        };
-        
-        onConfirmPayment(paymentDetails);
-        setIsProcessing(false);
-      }, 2000);
+      try {
+        const response = await initiateMpesaPayment(phoneNumber, calculateTotal());
+        if (response && response.ResponseCode === '0') {
+          const paymentDetails = {
+            method: paymentMethod,
+            amount: calculateTotal(),
+            transactionId: response.CheckoutRequestID,
+            phoneNumber: phoneNumber,
+            timestamp: new Date()
+          };
+          
+          onConfirmPayment(paymentDetails);
+          sendEmail(paymentDetails);
+        } else {
+          setErrors({ api: 'Payment initiation failed. Please try again.' });
+        }
+      } catch (error) {
+        setErrors({ api: 'An error occurred while processing the payment.' });
+      }
+      
+      setIsProcessing(false);
     }
-  };
-
-  const formatDate = (date) => {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
   };
 
   return (
@@ -84,27 +82,22 @@ function PaymentPage({ room, bookingDates, onConfirmPayment, setCurrentPage }) {
             
             <div className="summary-details">
               <h3>{room.type}</h3>
-              
               <div className="summary-item">
                 <span>Check-in:</span>
-                <span>{formatDate(bookingDates.checkIn)}</span>
+                <span>{new Date(bookingDates.checkIn).toLocaleDateString()}</span>
               </div>
-              
               <div className="summary-item">
                 <span>Check-out:</span>
-                <span>{formatDate(bookingDates.checkOut)}</span>
+                <span>{new Date(bookingDates.checkOut).toLocaleDateString()}</span>
               </div>
-              
               <div className="summary-item">
                 <span>Number of Nights:</span>
                 <span>{calculateNights()}</span>
               </div>
-              
               <div className="summary-item">
                 <span>Price per Night:</span>
                 <span>${room.price}</span>
               </div>
-              
               <div className="summary-item total">
                 <span>Total Amount:</span>
                 <span>${calculateTotal()}</span>
@@ -124,24 +117,6 @@ function PaymentPage({ room, bookingDates, onConfirmPayment, setCurrentPage }) {
               <FaMobile className="payment-icon" />
               <span>M-Pesa</span>
             </div>
-            
-            <div 
-              className={`payment-option ${paymentMethod === 'card' ? 'selected' : ''}`}
-              onClick={() => setPaymentMethod('card')}
-            >
-              <FaCreditCard className="payment-icon" />
-              <span>Credit Card</span>
-              <span className="coming-soon">Coming Soon</span>
-            </div>
-            
-            <div 
-              className={`payment-option ${paymentMethod === 'bank' ? 'selected' : ''}`}
-              onClick={() => setPaymentMethod('bank')}
-            >
-              <FaMoneyBillWave className="payment-icon" />
-              <span>Bank Transfer</span>
-              <span className="coming-soon">Coming Soon</span>
-            </div>
           </div>
           
           {paymentMethod === 'mpesa' && (
@@ -157,17 +132,7 @@ function PaymentPage({ room, bookingDates, onConfirmPayment, setCurrentPage }) {
                   disabled={isProcessing}
                 />
                 {errors.phoneNumber && <span className="error-message">{errors.phoneNumber}</span>}
-              </div>
-              
-              <div className="payment-instructions">
-                <h3>How to Pay with M-Pesa</h3>
-                <ol>
-                  <li>Enter your M-Pesa registered phone number above</li>
-                  <li>Click on "Pay Now" button</li>
-                  <li>You will receive a prompt on your phone</li>
-                  <li>Enter your M-Pesa PIN to complete the payment</li>
-                 <li>Once payment is confirmed, you'll receive a confirmation message</li>
-                </ol>
+                {errors.api && <span className="error-message">{errors.api}</span>}
               </div>
               
               <button 
@@ -177,23 +142,7 @@ function PaymentPage({ room, bookingDates, onConfirmPayment, setCurrentPage }) {
               >
                 {isProcessing ? 'Processing...' : 'Pay Now'} <FaLock />
               </button>
-              
-              <p className="secure-payment-note">
-                <FaLock /> All payments are secure and encrypted
-              </p>
             </form>
-          )}
-          
-          {(paymentMethod === 'card' || paymentMethod === 'bank') && (
-            <div className="coming-soon-message">
-              <p>This payment method will be available soon. Please use M-Pesa for now.</p>
-              <button 
-                className="switch-to-mpesa"
-                onClick={() => setPaymentMethod('mpesa')}
-              >
-                Switch to M-Pesa
-              </button>
-            </div>
           )}
         </div>
       </div>
