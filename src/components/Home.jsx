@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
 
-function Home({ rooms, currentPage, setCurrentPage, isLoggedIn, setShowLoginModal }) {
+function Home({ rooms, setCurrentPage, isLoggedIn, setShowLoginModal }) {
   const navigate = useNavigate();
 
   const handleBooking = (room) => {
@@ -19,17 +19,25 @@ function Home({ rooms, currentPage, setCurrentPage, isLoggedIn, setShowLoginModa
       </div>
 
       <div className="rooms-container">
-        {rooms.map((room, index) => (
-          <div key={index} className="room-card">
-            <img src={room.image} alt={room.type} />
-            <h2>{room.type}</h2>
-            <p>{room.description}</p>
-            <p className="price">ksh{room.price} per night</p>
-            <button onClick={() => handleBooking(room)} className="book-button">
-              BOOK NOW
-            </button>
-          </div>
-        ))}
+        {rooms.length > 0 ? (
+          rooms.map((room, index) => (
+            <div key={index} className="room-card">
+              <img src={room.image} alt={room.type} className="room-image" />
+              <h2 className="room-title">{room.type}</h2>
+              <p className="room-description">{room.description}</p>
+              <p className="price">Ksh {room.price} per night</p>
+              <button 
+                onClick={() => handleBooking(room)} 
+                className="book-button"
+                aria-label={`Book ${room.type}`}
+              >
+                BOOK NOW
+              </button>
+            </div>
+          ))
+        ) : (
+          <p className="no-rooms-message">No rooms available at the moment.</p>
+        )}
       </div>
     </>
   );

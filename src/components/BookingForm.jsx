@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { FaCalendarAlt, FaUsers, FaArrowRight } from 'react-icons/fa';
 import './BookingForm.css';
 
-function BookingForm({ room, onDateSelection, bookingDates, setCurrentPage }) {
+function BookingForm({ room, onDateSelection, bookingDates }) {
   const navigate = useNavigate();
   const [checkIn, setCheckIn] = useState(bookingDates.checkIn || null);
   const [checkOut, setCheckOut] = useState(bookingDates.checkOut || null);
@@ -26,51 +26,33 @@ function BookingForm({ room, onDateSelection, bookingDates, setCurrentPage }) {
 
   const validateForm = () => {
     const newErrors = {};
-    
     if (!checkIn) newErrors.checkIn = 'Check-in date is required';
     if (!checkOut) newErrors.checkOut = 'Check-out date is required';
-    
     if (checkIn && checkOut) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
-      if (checkIn < today) {
-        newErrors.checkIn = 'Check-in date cannot be in the past';
-      }
-      
-      if (checkOut <= checkIn) {
-        newErrors.checkOut = 'Check-out date must be after check-in date';
-      }
+      if (checkIn < today) newErrors.checkIn = 'Check-in date cannot be in the past';
+      if (checkOut <= checkIn) newErrors.checkOut = 'Check-out date must be after check-in date';
     }
-    
-    if (guests < 1 || guests > 30) {
-      newErrors.guests = 'Number of guests must be between 1 and 30';
-    }
-    
+    if (guests < 1 || guests > 30) newErrors.guests = 'Number of guests must be between 1 and 30';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
     if (validateForm()) {
       onDateSelection({ checkIn, checkOut });
-      setCurrentPage('payment');
       navigate('/payment');
     }
   };
 
   const calculateNights = () => {
     if (!checkIn || !checkOut) return 0;
-    const diffTime = Math.abs(checkOut - checkIn);
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
   };
 
-  const calculateTotal = () => {
-    const nights = calculateNights();
-    return nights * room.price;
-  };
+  const calculateTotal = () => calculateNights() * room.price;
 
   return (
     <div className="booking-form-container">
@@ -85,9 +67,8 @@ function BookingForm({ room, onDateSelection, bookingDates, setCurrentPage }) {
           <div className="booking-room-info">
             <h2>{room.type}</h2>
             <p className="room-description">{room.description}</p>
-            <p className="room-price">Ksh{room.price} per night</p>
+            <p className="room-price">Ksh {room.price} per night</p>
             <p className="room-capacity">Max {room.maxGuests} Guests / {room.bedConfig}</p>
-            
             <div className="room-amenities">
               <h3>Amenities</h3>
               <ul>
@@ -101,9 +82,7 @@ function BookingForm({ room, onDateSelection, bookingDates, setCurrentPage }) {
         
         <form className="booking-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>
-              <FaCalendarAlt /> Check-in Date
-            </label>
+            <label><FaCalendarAlt /> Check-in Date</label>
             <DatePicker
               selected={checkIn}
               onChange={handleCheckInChange}
@@ -118,9 +97,7 @@ function BookingForm({ room, onDateSelection, bookingDates, setCurrentPage }) {
           </div>
           
           <div className="form-group">
-            <label>
-              <FaCalendarAlt /> Check-out Date
-            </label>
+            <label><FaCalendarAlt /> Check-out Date</label>
             <DatePicker
               selected={checkOut}
               onChange={handleCheckOutChange}
@@ -136,9 +113,7 @@ function BookingForm({ room, onDateSelection, bookingDates, setCurrentPage }) {
           </div>
           
           <div className="form-group">
-            <label>
-              <FaUsers /> Number of Guests
-            </label>
+            <label><FaUsers /> Number of Guests</label>
             <input
               type="number"
               value={guests}
@@ -162,22 +137,10 @@ function BookingForm({ room, onDateSelection, bookingDates, setCurrentPage }) {
           
           <div className="booking-summary">
             <h3>Booking Summary</h3>
-            <div className="summary-item">
-              <span>Room Type:</span>
-              <span>{room.type}</span>
-            </div>
-            <div className="summary-item">
-              <span>Number of Nights:</span>
-              <span>{calculateNights()}</span>
-            </div>
-            <div className="summary-item">
-              <span>Price per Night:</span>
-              <span>${room.price}</span>
-            </div>
-            <div className="summary-item total">
-              <span>Total:</span>
-              <span>Ksh{calculateTotal()}</span>
-            </div>
+            <div className="summary-item"><span>Room Type:</span><span>{room.type}</span></div>
+            <div className="summary-item"><span>Number of Nights:</span><span>{calculateNights()}</span></div>
+            <div className="summary-item"><span>Price per Night:</span><span>Ksh {room.price}</span></div>
+            <div className="summary-item total"><span>Total:</span><span>Ksh {calculateTotal()}</span></div>
           </div>
           
           <button type="submit" className="proceed-button">
